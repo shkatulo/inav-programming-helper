@@ -2,45 +2,15 @@ const OPERAND_CONST = 0;
 const OPERAND_LC = 4;
 
 const commands = `
-logic 0 1 -1 1 2 31 0 0 0
-logic 1 1 -1 1 2 31 0 1 0
-logic 2 1 -1 1 3 0 0 1 0
-logic 3 1 -1 6 1 10 0 0 0
-logic 4 1 -1 7 4 0 4 2 0
-logic 5 1 -1 8 4 3 4 4 0
-logic 6 1 -1 12 4 5 0 0 0
-logic 7 1 -1 7 4 1 4 2 0
-logic 8 1 -1 3 2 12 0 3000 0
-logic 9 1 -1 12 4 8 0 0 0
-logic 10 1 -1 7 4 5 4 8 0
-logic 11 1 -1 7 4 5 4 9 0
-logic 15 1 -1 16 2 90 0 1000000 0
-logic 16 1 -1 16 2 91 0 1000000 0
-logic 17 1 1 18 0 0 4 15 0
-logic 18 1 1 18 0 1 4 16 0
-logic 19 1 -1 17 5 0 0 100000 0
-logic 20 1 -1 17 5 1 0 100000 0
-logic 21 1 6 18 0 2 1 4 0
-logic 30 1 7 38 0 6 0 2000 0
-logic 32 1 5 38 0 5 0 1400 0
-logic 33 1 10 38 0 4 0 2000 0
-logic 34 1 11 38 0 4 5 2 0
-logic 36 1 -1 7 4 5 4 19 0
-logic 37 1 36 90 5 0 5 1 0
-logic 38 1 36 15 4 37 2 40 0
-logic 39 1 36 34 4 38 0 10 0
-logic 40 1 36 33 4 38 0 10 0
-logic 41 1 36 45 0 1 4 39 0
-logic 42 1 36 45 0 0 4 40 0
 `;
 
 // ***** main *****
 const parsed = parseLogicDump(commands);
 
 // Do operations here
-// insert(parsed, 0, 5);
-// remove(parsed, 12, 3);
-// move(parsed, 0, 12, 60);
+// insert(parsed, 45, 3);
+// remove(parsed, 28, 2);
+// move(parsed, 7, 1, 26);
 
 // console.log(parsed);
 console.log(formatLogicDump(parsed));
@@ -106,7 +76,7 @@ function formatLogicDump(rows: CommandsArray): string {
   const parts = rows
     .map((row, index) => (row ? formatLogicRow(row, index) : null))
     .filter((r) => r);
-  return ["-----", "logic reset", ...parts, "-----"].join("\n");
+  return ["-----", "batch start", "logic reset", ...parts, "batch end", "-----"].join("\n");
 }
 
 // ***** Operations *****
