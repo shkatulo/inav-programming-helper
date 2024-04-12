@@ -9,8 +9,9 @@ const parsed = parseLogicDump(commands);
 
 // Do operations here
 // insert(parsed, 45, 3);
-// remove(parsed, 28, 2);
-// move(parsed, 7, 1, 26);
+// remove(parsed, 4, 1);
+// remove(parsed, 2, 1);
+// move(parsed, 0, 28, 15);
 
 // console.log(parsed);
 console.log(formatLogicDump(parsed));
@@ -25,6 +26,10 @@ interface ILogicRow {
   operandBType: number;
   operandBValue: number;
   flags: number;
+
+  activatorRefUpdated?: boolean;
+  operandARefUpdated?: boolean;
+  operandBRefUpdated?: boolean;
 }
 
 type CommandsArray = (ILogicRow | null)[];
@@ -72,9 +77,9 @@ function parseLogicDump(dump: string): CommandsArray {
   return rows;
 }
 
-function formatLogicDump(rows: CommandsArray): string {
+function formatLogicDump(rows: CommandsArray, withDisabled = false): string {
   const parts = rows
-    .map((row, index) => (row ? formatLogicRow(row, index) : null))
+    .map((row, index) => ((row && (withDisabled || row.enabled)) ? formatLogicRow(row, index) : null))
     .filter((r) => r);
   return ["-----", "batch start", "logic reset", ...parts, "batch end", "-----"].join("\n");
 }
@@ -88,6 +93,7 @@ function updateRow(
 ) {
   // Shift activator
   if (
+    !row.activatorRefUpdated &&
     row.activatorId > -1 &&
     row.activatorId >= fromIndex &&
     (toIndex === undefined || row.activatorId <= toIndex)
@@ -97,10 +103,12 @@ function updateRow(
       console.warn("Deleted activator condition", row);
       row.activatorId = -1;
     }
+    row.activatorRefUpdated = true;
   }
 
   // Shift operand A
   if (
+    !row.operandARefUpdated &&
     row.operandAType === OPERAND_LC &&
     row.operandAValue >= fromIndex &&
     (toIndex === undefined || row.operandAValue <= toIndex)
@@ -111,10 +119,12 @@ function updateRow(
       row.operandAType = OPERAND_CONST;
       row.operandAValue = -111111;
     }
+    row.operandARefUpdated = true;
   }
 
   // Shift operand B
   if (
+    !row.operandBRefUpdated &&
     row.operandBType === OPERAND_LC &&
     row.operandBValue >= fromIndex &&
     (toIndex === undefined || row.operandBValue <= toIndex)
@@ -125,7 +135,18 @@ function updateRow(
       row.operandBType = OPERAND_CONST;
       row.operandBValue = -111111;
     }
+    row.operandBRefUpdated = true;
   }
+}
+
+function resetUpdatedState(rows: CommandsArray) {
+  rows.forEach((row) => {
+    if (row) {
+      row.activatorRefUpdated = false;
+      row.operandARefUpdated = false;
+      row.operandBRefUpdated = false;
+    }
+  });
 }
 
 function insert(
@@ -133,6 +154,8 @@ function insert(
   index: number,
   count: number,
 ): CommandsArray {
+  resetUpdatedState(rows);
+
   // Offset refs
   rows.forEach((row) => {
     if (row) updateRow(row, count, index);
@@ -149,6 +172,8 @@ function remove(
   index: number,
   count: number,
 ): CommandsArray {
+  resetUpdatedState(rows);
+
   // Remove refs
   const to = index + count - 1;
   rows.forEach((row) => {
@@ -173,15 +198,17 @@ function move(
   count: number,
   indexTo: number,
 ): CommandsArray {
+  resetUpdatedState(rows);
+
   const offset = indexTo - indexFrom;
 
   // Offset refs to moved block
-  let to = indexFrom + count - 1;
+  const to = indexFrom + count - 1;
   rows.forEach((row) => {
     if (row) updateRow(row, offset, indexFrom, to);
   });
 
-  // Offset refs to pulled items
+  // Offset refs to pushed items
   if (offset > 0) {
     const fr = indexFrom + count;
     const to = fr + offset - 1;
@@ -196,18 +223,18 @@ function move(
     });
   }
 
-  // Extend array, if needed
-  if (rows.length < indexTo) {
-    const empty = new Array(indexTo - rows.length).fill(null);
-    rows.push(...empty);
-  }
-
   // Cut items
   const cut = rows.splice(indexFrom, count);
 
+  // Extend array, if needed
+  if (rows.length < indexTo) {
+    const empty = new Array(indexTo - rows.length).fill(null);
+    console.log(empty);
+    rows.push(...empty);
+  }
+
   // Insert at new place
-  to = offset > 0 ? indexTo - count : indexTo;
-  rows.splice(to, 0, ...cut);
+  rows.splice(indexTo, 0, ...cut);
 
   return rows;
 }
