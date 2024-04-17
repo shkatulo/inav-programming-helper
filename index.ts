@@ -11,7 +11,7 @@ const parsed = parseLogicDump(commands);
 // insert(parsed, 45, 3);
 // remove(parsed, 4, 1);
 // remove(parsed, 2, 1);
-// move(parsed, 0, 28, 15);
+// move(parsed, 0, 42, 15);
 
 // console.log(parsed);
 console.log(formatLogicDump(parsed));
@@ -37,7 +37,7 @@ type CommandsArray = (ILogicRow | null)[];
 function parseLogicRow(
   row: string,
 ): { index: number; row: ILogicRow } | undefined {
-  const parts = row.split(" ");
+  const parts = row.trim().split(" ");
   if (parts.length !== 10 || parts[0] !== "logic") return;
   return {
     index: +parts[1],
@@ -70,7 +70,10 @@ function parseLogicDump(dump: string): CommandsArray {
     if (row && index !== undefined) rows[index] = row;
   });
 
-  for (let i = 0; i < parts.length; i++) {
+  const keys = Object.keys(rows);
+  const length = +keys[keys.length - 1] + 1;
+
+  for (let i = 0; i < length; i++) {
     rows[i] = rows[i] ?? null; // Replace missing elements by nulls
   }
 
