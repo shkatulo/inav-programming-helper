@@ -201,9 +201,10 @@ function move(
   count: number,
   indexTo: number,
 ): CommandsArray {
-  resetUpdatedState(rows);
-
   const offset = indexTo - indexFrom;
+  if (offset === 0) return rows;
+
+  resetUpdatedState(rows);
 
   // Offset refs to moved block
   const to = indexFrom + count - 1;
